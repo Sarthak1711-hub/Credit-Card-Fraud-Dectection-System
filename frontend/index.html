@@ -1,916 +1,359 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>FraudShield AI · Secure Ledger</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg:#07090f;
-  --s1:#0c1018;
-  --s2:#111827;
-  --s3:#1a2235;
-  --border:rgba(96,165,250,0.1);
-  --border2:rgba(96,165,250,0.2);
-  --cyan:#00d4ff;
-  --green:#10d98c;
-  --red:#ff3b5c;
-  --amber:#f59e0b;
-  --purple:#a855f7;
-  --blue:#3b82f6;
-  --text:#e2e8f0;
-  --muted:#4b5563;
-  --muted2:#6b7280;
-  --mono:'Space Mono',monospace;
-  --sans:'DM Sans',sans-serif;
-}
-
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
-
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:
-    linear-gradient(rgba(0,212,255,0.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,212,255,0.025) 1px,transparent 1px);
-  background-size:56px 56px;pointer-events:none;z-index:0;
-}
-
-.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0}
-.orb1{width:500px;height:500px;top:-150px;left:-100px;background:radial-gradient(circle,rgba(0,212,255,0.06),transparent 70%)}
-.orb2{width:400px;height:400px;bottom:-100px;right:-80px;background:radial-gradient(circle,rgba(168,85,247,0.06),transparent 70%)}
-
-.page{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column}
-
-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 28px;border-bottom:1px solid var(--border);
-  background:rgba(7,9,15,0.8);
--webkit-backdrop-filter: blur(16px);
- backdrop-filter: blur(16px);
-  flex-shrink:0;
-}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-mark{
-  width:30px;height:30px;border-radius:8px;
-  background:linear-gradient(135deg,var(--cyan),var(--purple));
-  display:flex;align-items:center;justify-content:center;font-size:14px;
-}
-.logo-name{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--cyan)}
-.logo-sub{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.05em}
-
-.hdr-badges{display:flex;gap:8px}
-.badge{
-  display:flex;align-items:center;gap:6px;
-  padding:5px 10px;border-radius:20px;font-family:var(--mono);font-size:10px;
-  border:1px solid var(--border);color:var(--muted2);letter-spacing:.04em;
-}
-.badge .dot{width:6px;height:6px;border-radius:50%}
-.dot-green{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite}
-.dot-cyan{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
-.dot-amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-.tabs{
-  display:flex;gap:0;border-bottom:1px solid var(--border);
-  background:rgba(7,9,15,0.6);flex-shrink:0;padding:0 28px;
-}
-.tab{
-  padding:12px 18px;font-family:var(--mono);font-size:11px;
-  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
-  color:var(--muted2);border-bottom:2px solid transparent;
-  transition:all .2s;
--webkit-user-select: none;
-  user-select: none;
-}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
-
-.content{flex:1;overflow:hidden;display:flex}
-
-.panel{display:none;width:100%;overflow-y:auto;padding:24px 28px}
-.panel.active{display:flex;gap:24px}
-.panel-single.active{display:block}
-
-.sec-label{
-  font-family:var(--mono);font-size:10px;letter-spacing:.15em;
-  text-transform:uppercase;color:var(--muted2);
-  display:flex;align-items:center;gap:8px;margin-bottom:14px;
-}
-.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
-
-.card{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:14px;padding:20px;
-}
-
-#tab-analyze{gap:20px}
-
-.col-left{width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:16px}
-.col-mid{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
-.col-right{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:16px}
-
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.field:last-child{margin-bottom:0}
-.field label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2)}
-.field input,.field select{
-  background:var(--s2);border:1px solid var(--border);
-  border-radius:9px;padding:10px 12px;color:var(--text);
-  font-family:var(--mono);font-size:13px;outline:none;
-  transition:border-color .2s,box-shadow .2s;width:100%;appearance:none;
-}
-.field input:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,.07)}
-
-.sel-wrap{position:relative}
-.sel-wrap::after{
-  content:'▾';position:absolute;right:10px;top:50%;
-  transform:translateY(-50%);color:var(--muted2);pointer-events:none;font-size:11px;
-}
-
-.btn{
-  width:100%;padding:11px;border-radius:10px;border:none;cursor:pointer;
-  font-family:var(--mono);font-size:11px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;
-  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;
-}
-.btn-analyze{
-  background:linear-gradient(135deg,var(--cyan),#0099cc);color:#000;margin-bottom:8px;
-}
-.btn-analyze:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,212,255,.25)}
-.btn-ghost{background:var(--s2);border:1px solid var(--border);color:var(--text)}
-.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
-
-/* Verdict */
-.verdict-box{
-  border-radius:11px;padding:14px 16px;
-  display:flex;align-items:center;gap:12px;
-  font-family:var(--mono);font-weight:700;font-size:13px;
-  transition:all .3s;
-}
-.verdict-box.idle{background:rgba(75,85,99,.1);border:1px solid var(--border);color:var(--muted2)}
-.verdict-box.safe{background:rgba(16,217,140,.08);border:1px solid rgba(16,217,140,.25);color:var(--green)}
-.verdict-box.fraud{background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.25);color:var(--red)}
-.verdict-box.loading{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);color:var(--cyan)}
-.v-icon{font-size:22px;line-height:1;flex-shrink:0}
-
-.metric{margin-bottom:11px}
-.metric:last-child{margin-bottom:0}
-.metric-hdr{display:flex;justify-content:space-between;margin-bottom:5px}
-.metric-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--muted2)}
-.metric-val{font-family:var(--mono);font-size:10px;color:var(--text)}
-.track{height:5px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}
-.fill{height:100%;width:0%;border-radius:5px;transition:width .9s cubic-bezier(.22,1,.36,1)}
-.fill-cyan{background:linear-gradient(90deg,#007acc,var(--cyan))}
-.fill-amber{background:linear-gradient(90deg,#b45309,var(--amber))}
-.fill-purple{background:linear-gradient(90deg,#7c3aed,var(--purple))}
-.fill-risk{background:linear-gradient(90deg,var(--green) 0%,var(--amber) 50%,var(--red) 100%)}
-
-.risk-big{
-  padding-top:12px;margin-top:12px;border-top:1px solid var(--border);
-  display:flex;align-items:flex-end;justify-content:space-between;
-}
-.risk-num{font-family:var(--mono);font-size:28px;font-weight:700}
-
-.crypto-row{display:flex;flex-direction:column;gap:8px}
-.crypto-field{
-  background:var(--s2);border:1px solid var(--border);
-  border-radius:9px;padding:10px 12px;
-}
-.crypto-field .cf-label{
-  font-family:var(--mono);font-size:9px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted2);margin-bottom:5px;
-}
-.crypto-field .cf-val{
-  font-family:var(--mono);font-size:10px;color:var(--cyan);
-  word-break:break-all;line-height:1.6;
-}
-.crypto-field .cf-val.hash{color:var(--amber)}
-.crypto-field .cf-val.ok{color:var(--green)}
-.crypto-field .cf-val.fail{color:var(--red)}
-
-.timing-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.chip{
-  padding:4px 10px;border-radius:20px;font-family:var(--mono);font-size:10px;
-  border:1px solid var(--border);color:var(--muted2);
-  display:flex;align-items:center;gap:5px;
-}
-.chip-cyan{border-color:rgba(0,212,255,.3);color:var(--cyan)}
-.chip-amber{border-color:rgba(245,158,11,.3);color:var(--amber)}
-
-#tab-chain.active{display:flex;flex-direction:column;gap:0;padding:0}
-.chain-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 28px;border-bottom:1px solid var(--border);flex-shrink:0;
-}
-.chain-header h2{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--purple)}
-.chain-stats{display:flex;gap:12px}
-.cstat{
-  font-family:var(--mono);font-size:10px;letter-spacing:.04em;
-  padding:4px 10px;border-radius:20px;
-  border:1px solid var(--border);color:var(--muted2);
-}
-
-.chain-list{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:0}
-.chain-empty{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:100%;gap:12px;color:var(--muted);
-}
-.chain-empty-icon{font-size:40px;opacity:.25}
-.chain-empty p{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted2)}
-
-.block-row{
-  display:grid;
-  grid-template-columns:60px 1fr 1fr 160px 120px 90px;
-  gap:0;
-  align-items:center;
-  padding:12px 14px;
-  border:1px solid var(--border);
-  border-radius:10px;margin-bottom:6px;
-  background:var(--s1);
-  animation:slideIn .25s ease forwards;
-}
-@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
-
-.block-row:hover{border-color:var(--border2);background:var(--s2)}
-.b-idx{font-family:var(--mono);font-size:11px;color:var(--muted2)}
-.b-verdict{font-family:var(--mono);font-size:11px;font-weight:700}
-.b-verdict.safe{color:var(--green)}
-.b-verdict.fraud{color:var(--red)}
-.b-prob{font-family:var(--mono);font-size:12px;font-weight:700}
-.b-prob.safe{color:var(--green)}
-.b-prob.fraud{color:var(--red)}
-.b-cipher{font-family:var(--mono);font-size:9px;color:var(--cyan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.b-hash{font-family:var(--mono);font-size:9px;color:var(--amber);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
-.b-integrity{
-  font-family:var(--mono);font-size:10px;font-weight:700;
-  padding:3px 8px;border-radius:20px;text-align:center;
-}
-.b-integrity.ok{background:rgba(16,217,140,.1);color:var(--green);border:1px solid rgba(16,217,140,.25)}
-.b-integrity.fail{background:rgba(255,59,92,.1);color:var(--red);border:1px solid rgba(255,59,92,.25)}
-
-.chain-col-header{
-  display:grid;
-  grid-template-columns:60px 1fr 1fr 160px 120px 90px;
-  padding:8px 14px;margin-bottom:8px;
-}
-.ch{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-
-#tab-perf.active{display:flex;flex-direction:column;gap:20px;padding:24px 28px}
-
-.perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-
-.stat-card{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:14px;padding:18px;
-}
-.stat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.stat-card-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)}
-.stat-card-icon{font-size:20px}
-
-.big-stat{font-family:var(--mono);font-size:32px;font-weight:700;line-height:1}
-.big-stat.cyan{color:var(--cyan)}
-.big-stat.amber{color:var(--amber)}
-.big-stat.green{color:var(--green)}
-.big-stat.purple{color:var(--purple)}
-.big-stat-unit{font-size:13px;color:var(--muted2);margin-left:4px}
-
-.big-sub{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:4px}
-
-.perf-table-wrap{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:14px;overflow:hidden;
-}
-
-table{width:100%;border-collapse:collapse}
-thead tr{background:var(--s2);border-bottom:1px solid var(--border)}
-th{
-  padding:12px 16px;text-align:left;
-  font-family:var(--mono);font-size:10px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted2);
-}
-td{
-  padding:11px 16px;font-family:var(--mono);font-size:11px;
-  border-bottom:1px solid var(--border);
-}
-tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--s2)}
-
-.td-name{color:var(--text);font-weight:700}
-.td-type{color:var(--muted2)}
-.td-time{color:var(--cyan)}
-.td-ops{color:var(--amber)}
-.td-size{color:var(--purple)}
-.td-secure{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:2px 8px;border-radius:20px;font-size:10px;font-family:var(--mono);
-}
-.secure-high{background:rgba(16,217,140,.1);color:var(--green);border:1px solid rgba(16,217,140,.25)}
-.secure-med{background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
-
-.bar-chart{display:flex;flex-direction:column;gap:10px;padding:4px 0}
-.bc-row{display:flex;align-items:center;gap:10px}
-.bc-label{font-family:var(--mono);font-size:10px;color:var(--muted2);width:80px;flex-shrink:0;text-align:right}
-.bc-track{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:8px;overflow:hidden}
-.bc-fill{height:100%;border-radius:8px;transition:width 1s cubic-bezier(.22,1,.36,1)}
-.bc-val{font-family:var(--mono);font-size:10px;width:60px;flex-shrink:0;color:var(--text)}
-
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(96,165,250,.15);border-radius:4px}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FraudShield AI · Secure Ledger</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
 
-<div class="orb orb1"></div>
-<div class="orb orb2"></div>
+  <div class="page">
 
-<div class="page">
-
-  <header>
-    <div class="logo">
-      <div class="logo-mark">💳</div>
-      <div>
-        <div class="logo-name">FraudShield AI</div>
-        <div class="logo-sub">Secure Ledger · v3.0</div>
+    <header>
+      <div class="logo">
+        <div class="logo-mark">💳</div>
+        <div>
+          <div class="logo-name">FraudShield AI</div>
+          <div class="logo-sub">Secure Ledger · v3.0</div>
+        </div>
       </div>
+      <div class="hdr-badges">
+        <div class="badge"><div class="dot dot-green"></div>Model Online</div>
+        <div class="badge"><div class="dot dot-cyan"></div>AES-256</div>
+        <div class="badge"><div class="dot dot-amber"></div>SHA-256</div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('analyze', this)">⚡ Analyze</div>
+      <div class="tab" onclick="switchTab('chain', this)">⛓ Blockchain</div>
+      <div class="tab" onclick="switchTab('perf', this)">📊 Performance</div>
     </div>
-    <div class="hdr-badges">
-      <div class="badge"><div class="dot dot-green"></div>Model Online</div>
-      <div class="badge"><div class="dot dot-cyan"></div>AES-256</div>
-      <div class="badge"><div class="dot dot-amber"></div>SHA-256</div>
-    </div>
-  </header>
 
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('analyze',this)">⚡ Analyze</div>
-    <div class="tab" onclick="switchTab('chain',this)">⛓ Blockchain</div>
-    <div class="tab" onclick="switchTab('perf',this)">📊 Performance</div>
-  </div>
+    <div class="content">
 
-  <div class="content">
+      <div class="panel active" id="tab-analyze">
 
-    <div class="panel active" id="tab-analyze">
+        <!-- Left: Input Form -->
+        <div class="col-left">
+          <div class="card">
+            <div class="sec-label">Transaction Data</div>
 
-      <div class="col-left">
-        <div class="card">
-          <div class="sec-label">Transaction Data</div>
-
-          <div class="field">
-            <label for="amount">Amount (USD)</label>
-            <input type="number" id="amount" value="1458.60" step="0.01">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="field">
-              <label for="hour">Hour (0–23)</label>
-              <input type="number" id="hour" value="5" min="0" max="23">
+              <label for="amount">Amount (USD)</label>
+              <input type="number" id="amount" value="1458.60" step="0.01">
             </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="hour">Hour (0–23)</label>
+                <input type="number" id="hour" value="5" min="0" max="23">
+              </div>
+              <div class="field">
+                <label for="location">Location Risk</label>
+                <input type="number" id="location" value="0.25" step="0.01" min="0" max="1">
+              </div>
+            </div>
+
             <div class="field">
-              <label for="location">Location Risk</label>
-              <input type="number" id="location" value="0.25" step="0.01" min="0" max="1">
-            </div>
-          </div>
-          <div class="field">
-            <label for="device">Device</label>
-            <div class="sel-wrap"><select id="device">
-              <option value="0">Desktop</option>
-              <option value="1">Mobile</option>
-            </select></div>
-          </div>
-          <div class="field">
-            <label for="international">Transaction Type</label>
-            <div class="sel-wrap"><select id="international">
-              <option value="0">Local</option>
-              <option value="1">International</option>
-            </select></div>
-          </div>
-
-          <div class="field">
-            <label>AES Secret Key</label>
-            <input type="text" id="aesKey" value="FraudShield$2024!" placeholder="Encryption key…">
-          </div>
-        </div>
-
-        <button class="btn btn-analyze" onclick="analyze()">⚡ Analyze &amp; Encrypt</button>
-        <button class="btn btn-ghost" onclick="randomize()">🎲 Random Transaction</button>
-      </div>
-
-      <div class="col-mid">
-        <div class="card">
-          <div class="sec-label">AI Verdict</div>
-          <div class="verdict-box idle" id="verdict">
-            <div class="v-icon">🔍</div>
-            <div>Awaiting transaction analysis…</div>
-          </div>
-
-          <div style="margin-top:16px">
-            <div class="metric">
-              <div class="metric-hdr">
-                <span class="metric-lbl">💰 Amount</span>
-                <span class="metric-val" id="mAmount">—</span>
+              <label for="device">Device</label>
+              <div class="sel-wrap">
+                <select id="device">
+                  <option value="0">Desktop</option>
+                  <option value="1">Mobile</option>
+                </select>
               </div>
-              <div class="track"><div id="barAmount" class="fill fill-cyan"></div></div>
-            </div>
-            <div class="metric">
-              <div class="metric-hdr">
-                <span class="metric-lbl">📍 Location Risk</span>
-                <span class="metric-val" id="mLoc">—</span>
-              </div>
-              <div class="track"><div id="barLoc" class="fill fill-amber"></div></div>
-            </div>
-            <div class="metric">
-              <div class="metric-hdr">
-                <span class="metric-lbl">⏰ Hour of Day</span>
-                <span class="metric-val" id="mHour">—</span>
-              </div>
-              <div class="track"><div id="barHour" class="fill fill-purple"></div></div>
             </div>
 
-            <div class="risk-big">
-              <div>
-                <div class="metric-lbl">⚠️ Fraud Probability</div>
-                <div class="track" style="width:200px;margin-top:6px"><div id="barRisk" class="fill fill-risk"></div></div>
+            <div class="field">
+              <label for="international">Transaction Type</label>
+              <div class="sel-wrap">
+                <select id="international">
+                  <option value="0">Local</option>
+                  <option value="1">International</option>
+                </select>
               </div>
-              <div class="risk-num" id="riskNum" style="color:var(--muted2)">—%</div>
+            </div>
+
+            <div class="field">
+              <label for="aesKey">AES Secret Key</label>
+              <input type="text" id="aesKey" value="FraudShield$2024!" placeholder="Encryption key…">
             </div>
           </div>
+
+          <button class="btn btn-analyze" onclick="analyze()">⚡ Analyze &amp; Encrypt</button>
+          <button class="btn btn-ghost" onclick="randomize()">🎲 Random Transaction</button>
+        </div>
+
+        <div class="col-mid">
+          <div class="card">
+            <div class="sec-label">AI Verdict</div>
+            <div class="verdict-box idle" id="verdict">
+              <div class="v-icon">🔍</div>
+              <div>Awaiting transaction analysis…</div>
+            </div>
+
+            <div class="metrics-section">
+              <div class="metric">
+                <div class="metric-hdr">
+                  <span class="metric-lbl">💰 Amount</span>
+                  <span class="metric-val" id="mAmount">—</span>
+                </div>
+                <div class="track"><div id="barAmount" class="fill fill-cyan"></div></div>
+              </div>
+              <div class="metric">
+                <div class="metric-hdr">
+                  <span class="metric-lbl">📍 Location Risk</span>
+                  <span class="metric-val" id="mLoc">—</span>
+                </div>
+                <div class="track"><div id="barLoc" class="fill fill-amber"></div></div>
+              </div>
+              <div class="metric">
+                <div class="metric-hdr">
+                  <span class="metric-lbl">⏰ Hour of Day</span>
+                  <span class="metric-val" id="mHour">—</span>
+                </div>
+                <div class="track"><div id="barHour" class="fill fill-purple"></div></div>
+              </div>
+              <div class="risk-big">
+                <div>
+                  <div class="metric-lbl">⚠️ Fraud Probability</div>
+                  <div class="track track-wide">
+                    <div id="barRisk" class="fill fill-risk"></div>
+                  </div>
+                </div>
+                <div class="risk-num" id="riskNum">—%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sec-label">🔐 AES-256 Encryption</div>
+            <div class="crypto-row">
+              <div class="crypto-field">
+                <div class="cf-label">Plaintext (transaction payload)</div>
+                <div class="cf-val" id="cfPlain">—</div>
+              </div>
+              <div class="crypto-field">
+                <div class="cf-label">Ciphertext (AES-256-CBC encrypted)</div>
+                <div class="cf-val" id="cfCipher">—</div>
+              </div>
+              <div class="crypto-field">
+                <div class="cf-label">Decrypted (verification)</div>
+                <div class="cf-val ok" id="cfDecrypt">—</div>
+              </div>
+            </div>
+            <div class="timing-chips" id="aesTiming"></div>
+          </div>
+        </div>
+
+        <div class="col-right">
+          <div class="card">
+            <div class="sec-label">#️⃣ SHA-256 Hashing</div>
+            <div class="crypto-row">
+              <div class="crypto-field">
+                <div class="cf-label">Input data</div>
+                <div class="cf-val" id="shInput">—</div>
+              </div>
+              <div class="crypto-field">
+                <div class="cf-label">SHA-256 digest</div>
+                <div class="cf-val hash" id="shHash">—</div>
+              </div>
+              <div class="crypto-field">
+                <div class="cf-label">Integrity status</div>
+                <div class="cf-val ok" id="shIntegrity">—</div>
+              </div>
+            </div>
+            <div class="timing-chips" id="shaTiming"></div>
+          </div>
+
+          <div class="card">
+            <div class="sec-label">📦 Block Preview</div>
+            <div class="crypto-field mb-8">
+              <div class="cf-label">Block index</div>
+              <div class="cf-val" id="bpIdx">—</div>
+            </div>
+            <div class="crypto-field mb-8">
+              <div class="cf-label">Timestamp</div>
+              <div class="cf-val" id="bpTs">—</div>
+            </div>
+            <div class="crypto-field mb-8">
+              <div class="cf-label">Prediction · Probability</div>
+              <div class="cf-val" id="bpPred">—</div>
+            </div>
+            <div class="crypto-field">
+              <div class="cf-label">Block hash (SHA-256)</div>
+              <div class="cf-val hash" id="bpHash">—</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel panel-single" id="tab-chain">
+
+        <div class="chain-header">
+          <h2>⛓ Immutable Ledger</h2>
+          <div class="chain-stats">
+            <div class="cstat" id="cs-total">0 blocks</div>
+            <div class="cstat" id="cs-fraud">0 fraud</div>
+            <div class="cstat" id="cs-safe">0 safe</div>
+            <div class="cstat" id="cs-integrity">✓ Integrity OK</div>
+          </div>
+        </div>
+
+        <div class="chain-col-wrap">
+          <div class="chain-col-header">
+            <div class="ch">Index</div>
+            <div class="ch">Verdict</div>
+            <div class="ch">Probability</div>
+            <div class="ch">Ciphertext (AES)</div>
+            <div class="ch">Hash (SHA-256)</div>
+            <div class="ch">Integrity</div>
+          </div>
+        </div>
+
+        <div class="chain-list" id="chainList">
+          <div class="chain-empty" id="chainEmpty">
+            <div class="chain-empty-icon">⛓</div>
+            <p>No blocks yet · Run an analysis to add the first block</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel panel-single" id="tab-perf">
+
+        <div class="perf-grid">
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div class="stat-card-title">AES Avg. Encrypt Time</div>
+              <div class="stat-card-icon">🔐</div>
+            </div>
+            <div class="big-stat cyan" id="pAesTime">—<span class="big-stat-unit">ms</span></div>
+            <div class="big-sub" id="pAesOps">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div class="stat-card-title">SHA Avg. Hash Time</div>
+              <div class="stat-card-icon">#️⃣</div>
+            </div>
+            <div class="big-stat amber" id="pShaTime">—<span class="big-stat-unit">ms</span></div>
+            <div class="big-sub" id="pShaOps">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div class="stat-card-title">Total Transactions</div>
+              <div class="stat-card-icon">📦</div>
+            </div>
+            <div class="big-stat green" id="pTotal">0</div>
+            <div class="big-sub" id="pFraudCount">0 fraud detected</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <div class="stat-card-title">Chain Integrity</div>
+              <div class="stat-card-icon">🛡️</div>
+            </div>
+            <div class="big-stat purple" id="pIntegrity">100%</div>
+            <div class="big-sub" id="pIntegritySub">All hashes valid</div>
+          </div>
+        </div>
+
+        <div class="perf-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Algorithm</th><th>Type</th><th>Avg Time</th>
+                <th>Throughput</th><th>Output Size</th><th>Key Size</th>
+                <th>Security Level</th><th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-name">AES-256</td>
+                <td class="td-type">Symmetric Cipher</td>
+                <td class="td-time" id="pt-aes-time">—</td>
+                <td class="td-ops"  id="pt-aes-ops">—</td>
+                <td class="td-size">Variable</td><td class="td-size">256 bit</td>
+                <td><span class="td-secure secure-high">● High</span></td>
+                <td class="td-type">Encrypt payload</td>
+              </tr>
+              <tr>
+                <td class="td-name">SHA-256</td>
+                <td class="td-type">Hash Function</td>
+                <td class="td-time" id="pt-sha-time">—</td>
+                <td class="td-ops"  id="pt-sha-ops">—</td>
+                <td class="td-size">256 bit</td><td class="td-size">N/A</td>
+                <td><span class="td-secure secure-high">● High</span></td>
+                <td class="td-type">Integrity check</td>
+              </tr>
+              <tr>
+                <td class="td-name">HMAC-SHA256</td><td class="td-type">MAC</td>
+                <td class="td-time">~0.05 ms</td><td class="td-ops">~20,000 ops/s</td>
+                <td class="td-size">256 bit</td><td class="td-size">Any</td>
+                <td><span class="td-secure secure-high">● High</span></td>
+                <td class="td-type">Authenticated hash</td>
+              </tr>
+              <tr>
+                <td class="td-name">MD5</td><td class="td-type">Hash Function</td>
+                <td class="td-time">~0.01 ms</td><td class="td-ops">~100,000 ops/s</td>
+                <td class="td-size">128 bit</td><td class="td-size">N/A</td>
+                <td><span class="td-secure secure-med">⚠ Weak</span></td>
+                <td class="td-type">Legacy checksum</td>
+              </tr>
+              <tr>
+                <td class="td-name">AES-128</td><td class="td-type">Symmetric Cipher</td>
+                <td class="td-time">~0.04 ms</td><td class="td-ops">~25,000 ops/s</td>
+                <td class="td-size">Variable</td><td class="td-size">128 bit</td>
+                <td><span class="td-secure secure-med">● Medium</span></td>
+                <td class="td-type">Faster encrypt</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="card">
-          <div class="sec-label">🔐 AES-256 Encryption</div>
-          <div class="crypto-row">
-            <div class="crypto-field">
-              <div class="cf-label">Plaintext (transaction payload)</div>
-              <div class="cf-val" id="cfPlain">—</div>
+          <div class="sec-label">Speed Comparison (lower = faster)</div>
+          <div class="bar-chart">
+            <div class="bc-row">
+              <div class="bc-label">AES-256</div>
+              <div class="bc-track"><div class="bc-fill" id="bc-aes"></div></div>
+              <div class="bc-val" id="bcv-aes">—</div>
             </div>
-            <div class="crypto-field">
-              <div class="cf-label">Ciphertext (AES-256-CBC encrypted)</div>
-              <div class="cf-val" id="cfCipher">—</div>
+            <div class="bc-row">
+              <div class="bc-label">SHA-256</div>
+              <div class="bc-track"><div class="bc-fill" id="bc-sha"></div></div>
+              <div class="bc-val" id="bcv-sha">—</div>
             </div>
-            <div class="crypto-field">
-              <div class="cf-label">Decrypted (verification)</div>
-              <div class="cf-val ok" id="cfDecrypt">—</div>
+            <div class="bc-row">
+              <div class="bc-label">HMAC-SHA256</div>
+              <div class="bc-track"><div class="bc-fill" id="bc-hmac"></div></div>
+              <div class="bc-val">~0.05ms</div>
             </div>
-          </div>
-          <div class="timing-chips" id="aesTiming"></div>
-        </div>
-      </div>
-
-      <div class="col-right">
-        <div class="card">
-          <div class="sec-label">#️⃣ SHA-256 Hashing</div>
-          <div class="crypto-row">
-            <div class="crypto-field">
-              <div class="cf-label">Input data</div>
-              <div class="cf-val" id="shInput">—</div>
+            <div class="bc-row">
+              <div class="bc-label">MD5</div>
+              <div class="bc-track"><div class="bc-fill" id="bc-md5"></div></div>
+              <div class="bc-val">~0.01ms</div>
             </div>
-            <div class="crypto-field">
-              <div class="cf-label">SHA-256 digest</div>
-              <div class="cf-val hash" id="shHash">—</div>
-            </div>
-            <div class="crypto-field">
-              <div class="cf-label">Integrity status</div>
-              <div class="cf-val ok" id="shIntegrity">—</div>
+            <div class="bc-row">
+              <div class="bc-label">AES-128</div>
+              <div class="bc-track"><div class="bc-fill" id="bc-aes128"></div></div>
+              <div class="bc-val">~0.04ms</div>
             </div>
           </div>
-          <div class="timing-chips" id="shaTiming"></div>
         </div>
 
-        <div class="card">
-          <div class="sec-label">📦 Block Preview</div>
-          <div class="crypto-field" style="margin-bottom:8px">
-            <div class="cf-label">Block index</div>
-            <div class="cf-val" id="bpIdx">—</div>
-          </div>
-          <div class="crypto-field" style="margin-bottom:8px">
-            <div class="cf-label">Timestamp</div>
-            <div class="cf-val" id="bpTs">—</div>
-          </div>
-          <div class="crypto-field" style="margin-bottom:8px">
-            <div class="cf-label">Prediction · Probability</div>
-            <div class="cf-val" id="bpPred">—</div>
-          </div>
-          <div class="crypto-field">
-            <div class="cf-label">Block hash (SHA-256)</div>
-            <div class="cf-val hash" id="bpHash">—</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ── TAB 2: BLOCKCHAIN ── -->
-    <div class="panel panel-single" id="tab-chain">
-      <div class="chain-header">
-        <h2>⛓ Immutable Ledger</h2>
-        <div class="chain-stats">
-          <div class="cstat" id="cs-total">0 blocks</div>
-          <div class="cstat" id="cs-fraud" style="color:var(--red)">0 fraud</div>
-          <div class="cstat" id="cs-safe" style="color:var(--green)">0 safe</div>
-          <div class="cstat" id="cs-integrity" style="color:var(--green)">✓ Integrity OK</div>
-        </div>
-      </div>
-
-      <div style="padding:0 28px">
-        <div class="chain-col-header">
-          <div class="ch">Index</div>
-          <div class="ch">Verdict</div>
-          <div class="ch">Probability</div>
-          <div class="ch">Ciphertext (AES)</div>
-          <div class="ch">Hash (SHA-256)</div>
-          <div class="ch">Integrity</div>
-        </div>
-      </div>
-
-      <div class="chain-list" id="chainList">
-        <div class="chain-empty" id="chainEmpty">
-          <div class="chain-empty-icon">⛓</div>
-          <p>No blocks yet · Run an analysis to add the first block</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel panel-single" id="tab-perf">
-
-      <div class="perf-grid">
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">AES Avg. Encrypt Time</div>
-            <div class="stat-card-icon">🔐</div>
-          </div>
-          <div class="big-stat cyan" id="pAesTime">—<span class="big-stat-unit">ms</span></div>
-          <div class="big-sub" id="pAesOps">—</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">SHA Avg. Hash Time</div>
-            <div class="stat-card-icon">#️⃣</div>
-          </div>
-          <div class="big-stat amber" id="pShaTime">—<span class="big-stat-unit">ms</span></div>
-          <div class="big-sub" id="pShaOps">—</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">Total Transactions</div>
-            <div class="stat-card-icon">📦</div>
-          </div>
-          <div class="big-stat green" id="pTotal">0</div>
-          <div class="big-sub" id="pFraudCount">0 fraud detected</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">Chain Integrity</div>
-            <div class="stat-card-icon">🛡️</div>
-          </div>
-          <div class="big-stat purple" id="pIntegrity">100%</div>
-          <div class="big-sub" id="pIntegritySub">All hashes valid</div>
-        </div>
-      </div>
-
-      <div class="perf-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Algorithm</th>
-              <th>Type</th>
-              <th>Avg Time</th>
-              <th>Throughput</th>
-              <th>Output Size</th>
-              <th>Key Size</th>
-              <th>Security Level</th>
-              <th>Purpose</th>
-            </tr>
-          </thead>
-          <tbody id="perfTableBody">
-            <tr>
-              <td class="td-name">AES-256</td>
-              <td class="td-type">Symmetric Cipher</td>
-              <td class="td-time" id="pt-aes-time">—</td>
-              <td class="td-ops" id="pt-aes-ops">—</td>
-              <td class="td-size">Variable</td>
-              <td class="td-size">256 bit</td>
-              <td><span class="td-secure secure-high">● High</span></td>
-              <td class="td-type">Encrypt payload</td>
-            </tr>
-            <tr>
-              <td class="td-name">SHA-256</td>
-              <td class="td-type">Hash Function</td>
-              <td class="td-time" id="pt-sha-time">—</td>
-              <td class="td-ops" id="pt-sha-ops">—</td>
-              <td class="td-size">256 bit</td>
-              <td class="td-size">N/A</td>
-              <td><span class="td-secure secure-high">● High</span></td>
-              <td class="td-type">Integrity check</td>
-            </tr>
-            <tr>
-              <td class="td-name">HMAC-SHA256</td>
-              <td class="td-type">MAC</td>
-              <td class="td-time">~0.05 ms</td>
-              <td class="td-ops">~20,000 ops/s</td>
-              <td class="td-size">256 bit</td>
-              <td class="td-size">Any</td>
-              <td><span class="td-secure secure-high">● High</span></td>
-              <td class="td-type">Authenticated hash</td>
-            </tr>
-            <tr>
-              <td class="td-name">MD5</td>
-              <td class="td-type">Hash Function</td>
-              <td class="td-time">~0.01 ms</td>
-              <td class="td-ops">~100,000 ops/s</td>
-              <td class="td-size">128 bit</td>
-              <td class="td-size">N/A</td>
-              <td><span class="td-secure secure-med">⚠ Weak</span></td>
-              <td class="td-type">Legacy checksum</td>
-            </tr>
-            <tr>
-              <td class="td-name">AES-128</td>
-              <td class="td-type">Symmetric Cipher</td>
-              <td class="td-time">~0.04 ms</td>
-              <td class="td-ops">~25,000 ops/s</td>
-              <td class="td-size">Variable</td>
-              <td class="td-size">128 bit</td>
-              <td><span class="td-secure secure-med">● Medium</span></td>
-              <td class="td-type">Faster encrypt</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card">
-        <div class="sec-label">Speed Comparison (lower = faster)</div>
-        <div class="bar-chart" id="speedChart">
-          <div class="bc-row">
-            <div class="bc-label">AES-256</div>
-            <div class="bc-track"><div class="bc-fill" id="bc-aes" style="background:var(--cyan);width:0%"></div></div>
-            <div class="bc-val" id="bcv-aes">—</div>
-          </div>
-          <div class="bc-row">
-            <div class="bc-label">SHA-256</div>
-            <div class="bc-track"><div class="bc-fill" id="bc-sha" style="background:var(--amber);width:0%"></div></div>
-            <div class="bc-val" id="bcv-sha">—</div>
-          </div>
-          <div class="bc-row">
-            <div class="bc-label">HMAC-SHA256</div>
-            <div class="bc-track"><div class="bc-fill" style="background:var(--purple);width:30%"></div></div>
-            <div class="bc-val">~0.05ms</div>
-          </div>
-          <div class="bc-row">
-            <div class="bc-label">MD5</div>
-            <div class="bc-track"><div class="bc-fill" style="background:var(--green);width:8%"></div></div>
-            <div class="bc-val">~0.01ms</div>
-          </div>
-          <div class="bc-row">
-            <div class="bc-label">AES-128</div>
-            <div class="bc-track"><div class="bc-fill" style="background:var(--blue);width:25%"></div></div>
-            <div class="bc-val">~0.04ms</div>
-          </div>
-        </div>
       </div>
 
     </div>
   </div>
-</div>
 
-<script>
-
-const chain = [];
-const perfLog = { aes:[], sha:[] };
-const AES_KEY_DEFAULT = 'FraudShield$2024!';
-
-function switchTab(id, el) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-'+id).classList.add('active');
-  if(id==='perf') refreshPerf();
-  if(id==='chain') refreshChain();
-}
-
-function $(id){return document.getElementById(id)}
-function fmt(n,d=2){return parseFloat(n).toFixed(d)}
-
-function aesEncrypt(plaintext, key) {
-  const t0 = performance.now();
-  const cipher = CryptoJS.AES.encrypt(plaintext, key).toString();
-  const t1 = performance.now();
-  return { cipher, ms: t1-t0 };
-}
-
-function aesDecrypt(cipher, key) {
-  try {
-    const bytes = CryptoJS.AES.decrypt(cipher, key);
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch { return 'DECRYPT ERROR'; }
-}
-
-function sha256(data) {
-  const t0 = performance.now();
-  const hash = CryptoJS.SHA256(data).toString();
-  const t1 = performance.now();
-  return { hash, ms: t1-t0 };
-}
-
-function blockHash(block) {
-  const str = JSON.stringify({
-    index: block.index,
-    ts: block.ts,
-    cipher: block.cipher,
-    prediction: block.prediction,
-    probability: block.probability,
-    prevHash: block.prevHash
-  });
-  return sha256(str).hash;
-}
-
-async function analyze() {
-  const amount   = parseFloat($('amount').value);
-  const hour     = parseFloat($('hour').value);
-  const location = parseFloat($('location').value);
-  const device   = parseInt($('device').value);
-  const intl     = parseInt($('international').value);
-  const key      = $('aesKey').value || AES_KEY_DEFAULT;
-
-  if([amount,hour,location].some(isNaN)){alert('Fill all fields.'); return}
-
-  $('verdict').className='verdict-box loading';
-  $('verdict').innerHTML='<div class="v-icon">⏳</div><div>Analyzing…</div>';
-
-  let prediction=0, probability=Math.random();
-  try {
-    const features=[amount,hour,location,device,intl];
-    while(features.length<30) features.push(0);
-    const res = await fetch('http://127.0.0.1:8000/predict',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({features})
-    });
-    const d = await res.json();
-    prediction = d.prediction;
-    probability = d.fraud_probability;
-  } catch {
-    probability = amount>15000 ? 0.7+Math.random()*0.3
-      : hour<4||hour>22 ? 0.4+Math.random()*0.4
-      : location>0.7 ? 0.5+Math.random()*0.4
-      : intl ? 0.3+Math.random()*0.4
-      : Math.random()*0.35;
-    prediction = probability > 0.5 ? 1 : 0;
-  }
-
-  const payload = JSON.stringify({amount,hour,location,device,intl,prediction,probability:probability.toFixed(4)});
-  const aesResult = aesEncrypt(payload, key);
-  const decrypted = aesDecrypt(aesResult.cipher, key);
-  perfLog.aes.push(aesResult.ms);
-
-  const shaInput = aesResult.cipher + '|' + prediction + '|' + probability.toFixed(6);
-  const shaResult = sha256(shaInput);
-  perfLog.sha.push(shaResult.ms);
-
-  const prevHash = chain.length>0 ? chain[chain.length-1].hash : '0'.repeat(64);
-  const block = {
-    index: chain.length,
-    ts: new Date().toISOString(),
-    cipher: aesResult.cipher,
-    hash: '',
-    prevHash,
-    prediction,
-    probability: parseFloat(probability.toFixed(4)),
-    aesMs: aesResult.ms,
-    shaMs: shaResult.ms
-  };
-  block.hash = blockHash(block);
-  chain.push(block);
-
-  const isFraud = prediction===1;
-  $('verdict').className=`verdict-box ${isFraud?'fraud':'safe'}`;
-  $('verdict').innerHTML=`<div class="v-icon">${isFraud?'🚨':'✅'}</div>
-    <div>${isFraud?'Fraud Detected':'Safe Transaction'}
-    <span style="font-size:10px;opacity:.6;margin-left:8px">${(probability*100).toFixed(1)}% risk</span></div>`;
-
-  $('mAmount').textContent=`$${fmt(amount)}`;
-  $('mLoc').textContent=`${(location*100).toFixed(0)}%`;
-  $('mHour').textContent=`${hour}:00`;
-  $('riskNum').textContent=`${(probability*100).toFixed(1)}%`;
-  $('riskNum').style.color=probability>0.7?'var(--red)':probability>0.4?'var(--amber)':'var(--green)';
-
-  requestAnimationFrame(()=>{
-    $('barAmount').style.width=Math.min((amount/20000)*100,100)+'%';
-    $('barLoc').style.width=(location*100)+'%';
-    $('barHour').style.width=((hour/23)*100)+'%';
-    $('barRisk').style.width=Math.max(probability*100,3)+'%';
-  });
-
-  $('cfPlain').textContent=payload.length>80?payload.slice(0,80)+'…':payload;
-  $('cfCipher').textContent=aesResult.cipher.slice(0,72)+'…';
-  $('cfDecrypt').textContent=decrypted===payload?'✓ Match — data intact':decrypted;
-  $('aesTiming').innerHTML=`
-    <div class="chip chip-cyan">⏱ Encrypt: ${fmt(aesResult.ms,3)}ms</div>
-    <div class="chip chip-cyan">🔑 AES-256-CBC</div>`;
-
-  $('shInput').textContent=shaInput.slice(0,60)+'…';
-  $('shHash').textContent=shaResult.hash;
-  const reHash = sha256(shaInput).hash;
-  const ok = reHash === shaResult.hash;
-  $('shIntegrity').className=`cf-val ${ok?'ok':'fail'}`;
-  $('shIntegrity').textContent=ok?'✓ Hash verified — no tampering detected':'✗ Hash mismatch!';
-  $('shaTiming').innerHTML=`
-    <div class="chip chip-amber">⏱ Hash: ${fmt(shaResult.ms,3)}ms</div>
-    <div class="chip chip-amber">📏 256-bit digest</div>`;
-
-  $('bpIdx').textContent=`#${block.index}`;
-  $('bpTs').textContent=block.ts;
-  $('bpPred').textContent=`${isFraud?'🚨 FRAUD':'✅ SAFE'} · ${(probability*100).toFixed(2)}%`;
-  $('bpHash').textContent=block.hash;
-}
-
-function randomize() {
-  $('amount').value=(Math.random()*20000).toFixed(2);
-  $('hour').value=Math.floor(Math.random()*24);
-  $('location').value=Math.random().toFixed(2);
-  $('device').value=Math.random()>0.5?'1':'0';
-  $('international').value=Math.random()>0.7?'1':'0';
-}
-
-function refreshChain() {
-  const list=$('chainList');
-  $('chainEmpty').style.display=chain.length?'none':'flex';
-
-  list.querySelectorAll('.block-row').forEach(r=>r.remove());
-
-  const reversed=[...chain].reverse();
-  reversed.forEach((b,i)=>{
-    const isFraud=b.prediction===1;
-    const recomputed=blockHash(b);
-    const ok=recomputed===b.hash;
-
-    const row=document.createElement('div');
-    row.className='block-row';
-    row.style.animationDelay=`${i*30}ms`;
-    row.innerHTML=`
-      <div class="b-idx">#${String(b.index).padStart(4,'0')}</div>
-      <div class="b-verdict ${isFraud?'fraud':'safe'}">${isFraud?'🚨 FRAUD':'✅ SAFE'}</div>
-      <div class="b-prob ${isFraud?'fraud':'safe'}">${(b.probability*100).toFixed(1)}%</div>
-      <div class="b-cipher" title="${b.cipher}">${b.cipher.slice(0,28)}…</div>
-      <div class="b-hash" title="${b.hash}">${b.hash.slice(0,16)}…</div>
-      <div class="b-integrity ${ok?'ok':'fail'}">${ok?'✓ OK':'✗ FAIL'}</div>
-    `;
-    list.appendChild(row);
-  });
-
-  const fraudCount=chain.filter(b=>b.prediction===1).length;
-  $('cs-total').textContent=`${chain.length} block${chain.length!==1?'s':''}`;
-  $('cs-fraud').textContent=`${fraudCount} fraud`;
-  $('cs-safe').textContent=`${chain.length-fraudCount} safe`;
-  const allOk=chain.every(b=>blockHash(b)===b.hash);
-  $('cs-integrity').textContent=allOk?'✓ Integrity OK':'✗ Tampered!';
-  $('cs-integrity').style.color=allOk?'var(--green)':'var(--red)';
-}
-
-
-function refreshPerf() {
-  const n=chain.length;
-  const aesMsArr=perfLog.aes;
-  const shaMsArr=perfLog.sha;
-
-  const avgAes=aesMsArr.length?aesMsArr.reduce((a,b)=>a+b,0)/aesMsArr.length:null;
-  const avgSha=shaMsArr.length?shaMsArr.reduce((a,b)=>a+b,0)/shaMsArr.length:null;
-  const fraudCount=chain.filter(b=>b.prediction===1).length;
-  const allOk=chain.every(b=>blockHash(b)===b.hash);
-
-  $('pAesTime').innerHTML=avgAes!=null?`${fmt(avgAes,3)}<span class="big-stat-unit">ms</span>`:`—<span class="big-stat-unit">ms</span>`;
-  $('pAesOps').textContent=avgAes!=null?`~${Math.round(1000/avgAes).toLocaleString()} ops/sec`:`No data yet`;
-  $('pShaTime').innerHTML=avgSha!=null?`${fmt(avgSha,3)}<span class="big-stat-unit">ms</span>`:`—<span class="big-stat-unit">ms</span>`;
-  $('pShaOps').textContent=avgSha!=null?`~${Math.round(1000/avgSha).toLocaleString()} ops/sec`:`No data yet`;
-  $('pTotal').textContent=n;
-  $('pFraudCount').textContent=`${fraudCount} fraud detected`;
-  $('pIntegrity').textContent=n?`${allOk?'100':'<100'}%`:'—%';
-  $('pIntegritySub').textContent=n?(allOk?'All hashes valid':'⚠ Tampered block detected'):'No blocks yet';
-
-  if(avgAes!=null){
-    $('pt-aes-time').textContent=`${fmt(avgAes,3)} ms`;
-    $('pt-aes-ops').textContent=`~${Math.round(1000/avgAes).toLocaleString()} ops/s`;
-  }
-  if(avgSha!=null){
-    $('pt-sha-time').textContent=`${fmt(avgSha,3)} ms`;
-    $('pt-sha-ops').textContent=`~${Math.round(1000/avgSha).toLocaleString()} ops/s`;
-  }
-
-  if(avgAes!=null && avgSha!=null){
-    const maxMs=Math.max(avgAes,avgSha,0.05,0.04)*1.2;
-    const aesPct=Math.min((avgAes/maxMs)*100,100);
-    const shaPct=Math.min((avgSha/maxMs)*100,100);
-    requestAnimationFrame(()=>{
-      $('bc-aes').style.width=aesPct+'%';
-      $('bc-sha').style.width=shaPct+'%';
-      $('bcv-aes').textContent=`${fmt(avgAes,3)}ms`;
-      $('bcv-sha').textContent=`${fmt(avgSha,3)}ms`;
-    });
-  }
-}
-</script>
+  <script src="script.js"></script>
 </body>
 </html>

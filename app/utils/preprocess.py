@@ -2,8 +2,7 @@ import pandas as pd
 
 def preprocess_input(data, scaler):
     """
-    Convert incoming JSON/dict to the exact scaled format
-    expected by the trained model
+    Convert incoming JSON/dict to the exact scaled format expected by the trained model
     """
     df = pd.DataFrame([data])
 
