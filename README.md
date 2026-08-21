@@ -13,7 +13,7 @@
 > An end-to-end AI-powered fraud detection system with a blockchain-backed audit ledger, AES-256 encryption, and a real-time web dashboard.
 
 ---
-
+ 
 ## 📌 Overview
 
 This system detects fraudulent credit card transactions using an ensemble machine learning model. Every prediction is encrypted with AES-256, hashed with SHA-256, and permanently recorded on an immutable blockchain ledger — ensuring full auditability and tamper-proof traceability.
