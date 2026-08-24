@@ -4,7 +4,7 @@ def preprocess_input(data, scaler):
     """
     Convert incoming JSON/dict to the exact scaled format expected by the trained model
     """
-    df = pd.DataFrame([data])
+    df = pd.DataFrame([data]) ##Dictionary → DataFrame
 
     expected_columns = [
         'Time','V1','V2','V3','V4','V5','V6','V7','V8','V9','V10',
@@ -12,8 +12,8 @@ def preprocess_input(data, scaler):
         'V20','V21','V22','V23','V24','V25','V26','V27','V28','Amount'
     ]
 
-    df = df[expected_columns]
+    df = df[expected_columns] ##Fix Column Order
 
-    df_scaled = scaler.transform(df)
+    df_scaled = scaler.transform(df) ##Scale Data
 
     return df_scaled

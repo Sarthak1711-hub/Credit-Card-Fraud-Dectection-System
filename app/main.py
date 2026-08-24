@@ -17,9 +17,7 @@ with open(model_path, "rb") as f:
 
 model = model_package["model"]
 scaler = model_package["scaler"]
-
 app = FastAPI(title="AI Fraud Detection API")
-
 blockchain = Blockchain()
 
 app.add_middleware(
@@ -29,15 +27,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-class Transaction(BaseModel):
+class Transaction(BaseModel): ## define input format 
     features: list
 
-@app.post("/predict")
+@app.post("/predict") ##accepts transaction data and returns prediction results
 async def predict(transaction: Transaction):
 
     try:
-        data = np.array(transaction.features).reshape(1, -1)
+        data = np.array(transaction.features).reshape(1, -1) ##Frontend se aayi list ko NumPy array me convert karta hai.
 
         if data.shape[1] != 30:
             return {"error": "Exactly 30 feature values required."}
@@ -48,14 +45,13 @@ async def predict(transaction: Transaction):
             'V20','V21','V22','V23','V24','V25','V26','V27','V28','Amount'
         ]
 
-        data_dict = {col: data[0][i] for i, col in enumerate(columns)}
+        data_dict = {col: data[0][i] for i, col in enumerate(columns)} ##List ko dictionary me convert karta hai.
+        data_scaled = preprocess_input(data_dict, scaler) ##Input ko scale karta hai using the same scaler used during training
 
-        data_scaled = preprocess_input(data_dict, scaler)
+        prediction = int(model.predict(data_scaled)[0]) ##Fraud Prediction
+        probability = float(model.predict_proba(data_scaled)[0][1]) ##Probability Calculation
 
-        prediction = int(model.predict(data_scaled)[0])
-        probability = float(model.predict_proba(data_scaled)[0][1])
-
-        block_data = {
+        block_data = { ##Prediction record create hota hai
             "input": list(transaction.features),
             "prediction": prediction,
             "probability": probability
@@ -82,7 +78,7 @@ async def predict(transaction: Transaction):
         print("ERROR:", e)
         return {"error": str(e)} 
 
-@app.get("/blocks")
+@app.get("/blocks") ##To see all the blocks of the blockchain
 def get_blocks():
     chain_data = []
 
