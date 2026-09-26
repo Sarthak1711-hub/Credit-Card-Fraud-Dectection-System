@@ -328,4 +328,4 @@ Dataset sourced from the [ULB Machine Learning Group](https://www.kaggle.com/dat
 
 ---
 
-> Built by **Sarthak** — MCA Student, Amity University Noida
+> Built by **Sarthak** — MCA Student
